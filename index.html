@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>野球スコア速報</title>
+    <style>
+        /* 電光掲示板風のダークモードデザイン */
+        body {
+            background-color: #111111;
+            color: #ffffff;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 15px;
+        }
+
+        /* 試合情報エリア */
+        .match-info {
+            background-color: #222222;
+            border-left: 5px solid #ff9900;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        .match-info div {
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        .match-info .location {
+            color: #ccff00;
+            font-weight: bold;
+        }
+
+        /* 入力欄の基本スタイル */
+        input[type="text"], input[type="date"], select {
+            background-color: transparent;
+            border: none;
+            color: inherit;
+            font-family: inherit;
+            font-size: inherit;
+            font-weight: inherit;
+            padding: 2px 4px;
+            border-radius: 4px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        input[type="text"]:focus, input[type="date"]:focus, select:focus {
+            background-color: #333333;
+            outline: 1px solid #ff9900;
+        }
+        select {
+            cursor: pointer;
+            border-bottom: 1px dashed #555555;
+            color: #ccff00; /* 選択肢は目立つ黄緑色 */
+            padding-right: 2px;
+            text-align: center;
+        }
+
+        /* スコアボードのテーブル */
+        .scoreboard {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #000000;
+            border: 2px solid #333333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .scoreboard th {
+            background-color: #222222;
+            color: #aaaaaa;
+            font-size: 12px;
+            padding: 8px 4px;
+            border: 1px solid #333333;
+        }
+        .scoreboard td {
+            font-size: 18px;
+            font-weight: bold;
+            padding: 12px 4px;
+            border: 1px solid #333333;
+            color: #ffcc00;
+            position: relative;
+            user-select: none;
+        }
+        
+        .scoreboard .team-name-cell {
+            text-align: left;
+            padding: 0;
+            width: 25%;
+        }
+        .team-input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px 10px;
+            color: #ffffff !important;
+            font-size: 14px !important;
+            font-weight: bold;
+        }
+        .scoreboard .total-score {
+            color: #ff3300;
+            font-size: 22px;
+            background-color: #111111;
+        }
+
+        /* 点数表示用のスパン */
+        .score-text {
+            display: inline-block;
+            min-width: 15px;
+            min-height: 20px;
+        }
+
+        /* 点数入力用のイニングセル */
+        .inning-score {
+            cursor: pointer;
+            min-width: 35px;
+        }
+        .inning-score.active {
+            background-color: #222222;
+            outline: 2px solid #ff9900;
+        }
+
+        /* ポップアップする▲▼ボタン */
+        .score-stepper {
+            display: none;
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #333333;
+            border: 1px solid #555555;
+            border-radius: 4px;
+            z-index: 10;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            flex-direction: column;
+        }
+        .inning-score.active .score-stepper {
+            display: flex;
+        }
+        .score-btn {
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 16px;
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+        .score-btn:active {
+            background-color: #555555;
+        }
+        .score-btn.up { color: #ffcc00; }
+        .score-btn.down { color: #ff3300; border-top: 1px solid #444444; }
+
+        /* バッテリー情報エリア */
+        .battery-box {
+            background-color: #1a1a1a;
+            border: 1px solid #333333;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .battery-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333333;
+            padding-bottom: 5px;
+            margin-bottom: 12px;
+        }
+        .battery-box h3 {
+            margin: 0;
+            font-size: 15px;
+            color: #ff9900;
+        }
+        .add-btn {
+            background-color: #ff9900;
+            color: #000000;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .add-btn:active {
+            background-color: #e08800;
+        }
+
+        .battery-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .battery-list li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 14px;
+            line-height: 1.4;
+            padding-left: 10px;
+            border-left: 3px solid #ffcc00;
+        }
+        .battery-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex-grow: 1;
+        }
+        .battery-row-line {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .inn-label {
+            color: #aaaaaa;
+            font-size: 13px;
+        }
+        .player-input {
+            width: 80px;
+            border-bottom: 1px solid #444444 !important;
+            text-align: center;
+        }
+        .del-btn {
+            background: none;
+            border: none;
+            color: #ff3300;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0 10px;
+        }
+
+        /* アクションボタンエリア */
+        .action-box {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .share-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+        }
+        .btn-line {
+            background-color: #06C755; /* LINEグリーン */
+            color: #ffffff;
+        }
+        .btn-capture {
+            background-color: #222222;
+            color: #ff9900;
+            border: 1px solid #ff9900;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="match-info">
+        <div>
+            <span onclick="document.getElementById('match-date').showPicker();" style="cursor: pointer; font-size: 16px;">📅</span> 
+            <input type="date" id="match-date" value="2026-05-25" onclick="this.showPicker();"> 
+            ｜ 🏆 
+            <input type="text" id="match-title" value="" placeholder="大会名を入力">
+        </div>
+        <div class="location">
+            📍【会場】
+            <input type="text" id="match-location" value="" placeholder="球場名を入力">
+        </div>
+    </div>
+
+    <table class="scoreboard">
+        <thead>
+            <tr>
+                <th>チーム</th>
+                <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th>
+                <th style="color: #ff3300;">R</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="team-row">
+                <td class="team-name-cell">
+                    <input type="text" class="team-input" value="" placeholder="先攻チーム">
+                </td>
+                <td class="inning-score"><span class="score-text"></span></td>
+                <td class="inning-score"><span class="score-text"></span></td>
+                <td class="inning-score"><span class="score-text"></span></td>
+                <td class="inning-score"><span class="score-text"></span></td>
+                <td class="inning-score"><span class="score-text"></span></td>
+                <td class="inning-score"><span class="score-text"></span></td>
+                <td class="inning-score"><span class="score-text"></span></td>
+                <td class="total-score"></td>
+            </tr>
+            <tr class="team-row">
+                <td class="team-name-cell">
+                    <input type="text" class="team-input" value="" placeholder="後攻チーム">
+                </td>
+                <td class="inning-score"><span class="score-text"></span></td>
+                <td class="inning-score"><span class="score-text"></span></td>
+                <td class="inning-score"><span class="score-text"></span></td>
+                <td class="inning-score"><span class="score-text"></span></td>
+                <td class="inning-score"><span class="score-text"></span></td>
+                <td class="inning-score"><span class="score-text"></span></td>
+                <td class="inning-score"><span class="score-text"></span></td>
+                <td class="total-score"></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="battery-box">
+        <div class="battery-header">
+            <h3>⚾ バッテリー履歴</h3>
+            <button type="button" class="add-btn" id="add-battery-row">➕ 追加</button>
+        </div>
+        <ul class="battery-list" id="battery-container">
+            </ul>
+    </div>
+
+    <div class="action-box">
+        <button class="share-btn btn-line" id="line-share-btn">💬 LINEで速報を送る</button>
+        <button class="share-btn btn-capture" id="capture-btn">📸 画像として保存</button>
+    </div>
+
+    <div id="stepper-template" style="display: none;">
+        <div class="score-stepper">
+            <button class="score-btn up">▲</button>
+            <button class="score-btn down">▼</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- スコア入力・チーム名関連の処理 ---
+            const inningCells = document.querySelectorAll('.inning-score');
+            const stepperTemplate = document.getElementById('stepper-template').innerHTML;
+
+            inningCells.forEach(cell => {
+                cell.insertAdjacentHTML('beforeend', stepperTemplate);
+                const scoreTextSpan = cell.querySelector('.score-text');
+
+                cell.addEventListener('click', (e) => {
+                    if (e.target.closest('.score-stepper')) return;
+
+                    if (cell.classList.contains('active')) {
+                        cell.classList.remove('active');
+                    } else {
+                        clearActiveCells();
+                        cell.classList.add('active');
+                        if (scoreTextSpan.textContent.trim() === "") {
+                            scoreTextSpan.textContent = "0";
+                            updateTotalScore(cell.parentElement);
+                        }
+                    }
+                    e.stopPropagation();
+                });
+
+                cell.querySelector('.score-btn.up').addEventListener('click', (e) => {
+                    let currentScore = parseInt(scoreTextSpan.textContent.trim()) || 0;
+                    scoreTextSpan.textContent = currentScore + 1;
+                    updateTotalScore(cell.parentElement);
+                    e.stopPropagation();
+                });
+
+                cell.querySelector('.score-btn.down').addEventListener('click', (e) => {
+                    let currentScore = parseInt(scoreTextSpan.textContent.trim()) || 0;
+                    if (currentScore > 0) {
+                        scoreTextSpan.textContent = currentScore - 1;
+                    } else {
+                        scoreTextSpan.textContent = "";
+                    }
+                    updateTotalScore(cell.parentElement);
+                    e.stopPropagation();
+                });
+            });
+
+            document.addEventListener('click', () => {
+                clearActiveCells();
+            });
+
+            document.querySelectorAll('.team-input').forEach(input => {
+                input.addEventListener('click', (e) => {
+                    clearActiveCells();
+                    e.stopPropagation();
+                });
+            });
+
+            function clearActiveCells() {
+                inningCells.forEach(c => c.classList.remove('active'));
+            }
+
+            function updateTotalScore(row) {
+                const scoreTexts = row.querySelectorAll('.score-text');
+                let total = 0;
+                let hasScore = false;
+
+                scoreTexts.forEach(t => {
+                    const text = t.textContent.trim();
+                    if (text !== "") {
+                        total += parseInt(text);
+                        hasScore = true;
+                    }
+                });
+
+                const totalCell = row.querySelector('.total-score');
+                totalCell.textContent = hasScore ? total : "";
+            }
+
+
+            // --- バッテリー履歴の動的編集処理 ---
+            const batteryContainer = document.getElementById('battery-container');
+            const addRowBtn = document.getElementById('add-battery-row');
+
+            const numOptions = `
+                <option value="">-</option>
+                <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+                <option value="7">7</option><option value="延長">延長</option>
+            `;
+
+            function addBatteryRow(startNum="", endNum="", pitcherVal="", catcherVal="") {
+                const li = document.createElement('li');
+                li.classList.add('battery-item');
+
+                li.innerHTML = `
+                    <div class="battery-inputs">
+                        <div class="battery-row-line inn-label">
+                            ▼ 
+                            <select class="start-num">${numOptions}</select>回
+                            <span> 〜 </span>
+                            <select class="end-num">${numOptions}</select>回
+                        </div>
+                        <div class="battery-row-line">
+                            ［投］<input type="text" class="player-input" value="${pitcherVal}" placeholder="投手名">
+                            − 
+                            ［捕］<input type="text" class="player-input" value="${catcherVal}" placeholder="捕手名">
+                        </div>
+                    </div>
+                    <button type="button" class="del-btn" title="削除">❌</button>
+                `;
+
+                li.querySelector('.start-num').value = startNum;
+                li.querySelector('.end-num').value = endNum;
+
+                li.querySelector('.del-btn').addEventListener('click', () => {
+                    li.remove();
+                });
+
+                batteryContainer.appendChild(li);
+            }
+
+            // 1行目の親切設計（1回 〜 空欄）
+            addBatteryRow("1", "", "", "");
+
+            addRowBtn.addEventListener('click', () => {
+                addBatteryRow("", "", "", "");
+            });
+
+
+            // --- 💡 劇的修正：新ルールを反映したLINE送信機能 ---
+            document.getElementById('line-share-btn').addEventListener('click', () => {
+                const rows = document.querySelectorAll('.scoreboard tbody tr');
+                if (rows.length < 2) return;
+
+                const buildTeamLine = (row) => {
+                    let teamName = row.querySelector('.team-input').value.trim();
+                    if (!teamName) teamName = "チーム";
+
+                    // 💡 ルール1：チーム名は最初の2文字だけを切り出す
+                    let shortName = teamName.substring(0, 2);
+
+                    // 💡 ルール3：得点は半角数字で2桁分。1点は半角スペース+"1"、未消化は"--"
+                    const scoreTexts = row.querySelectorAll('.score-text');
+                    let scoresString = "";
+                    scoreTexts.forEach(span => {
+                        const score = span.textContent.trim();
+                        if (score !== "") {
+                            let sNum = parseInt(score);
+                            if (sNum < 10) {
+                                scoresString += " " + sNum; // 1桁なら前に半角スペース（計2桁）
+                            } else {
+                                scoresString += sNum; // 12点など2桁ならそのまま
+                            }
+                        } else {
+                            scoresString += "--"; // まだ行われていない回
+                        }
+                    });
+
+                    // 合計得点（R）も半角2桁で揃える
+                    let total = row.querySelector('.total-score').textContent.trim();
+                    let totalStr = " 0";
+                    if (total !== "") {
+                        let tNum = parseInt(total);
+                        totalStr = tNum < 10 ? " " + tNum : "" + tNum;
+                    }
+
+                    // 💡 ルール2：「｜」は使わず「:」で区切る
+                    return `${shortName}:${scoresString}:${totalStr}`;
+                };
+
+                const team1Line = buildTeamLine(rows[0]);
+                const team2Line = buildTeamLine(rows[1]);
+
+                // 💡 ルール4：バッテリー履歴「1回~7回 [投]鈴木[捕]山口」半角多用
+                const batteryItems = document.querySelectorAll('.battery-item');
+                let batteryLine = "";
+                if (batteryItems.length > 0) {
+                    const lastItem = batteryItems[batteryItems.length - 1];
+                    const startNum = lastItem.querySelector('.start-num').value;
+                    const endNum = lastItem.querySelector('.end-num').value;
+                    let pitcher = lastItem.querySelectorAll('.player-input')[0].value.trim();
+                    let catcher = lastItem.querySelectorAll('.player-input')[1].value.trim();
+
+                    if (!pitcher) pitcher = "？？";
+                    if (!catcher) catcher = "？？";
+
+                    let innStr = startNum ? `${startNum}回` : " 回";
+                    innStr += "~";
+                    if (endNum) innStr += `${endNum}回`;
+
+                    batteryLine = `${innStr} [投]${pitcher}[捕]${catcher}`;
+                }
+
+                // 3行にスッキリまとめる
+                const resultText = `${team1Line}\n${team2Line}\n${batteryLine}`;
+
+                // LINEアプリ起動用リンク
+                const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(resultText)}`;
+                window.location.href = lineUrl;
+            });
+
+            // 画像保存ボタン
+            document.getElementById('capture-btn').addEventListener('click', () => {
+                alert('試合お疲れ様でした！この後は、この綺麗なスコア画面をパシャリと画像化して保存・送信できるように仕上げていきましょう！');
+            });
+        });
+    </script>
+</body>
+</html>
