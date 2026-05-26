@@ -36,6 +36,7 @@
         }
         .match-info .location {
             color: #ffffff;
+            font-weight: bold;
         }
         #match-location {
             color: #ffffff !important;
@@ -103,38 +104,37 @@
             user-select: none;
         }
         
+        /* 🛠 【修正箇所】チーム名エリアの横幅を22%から25%に少し広げて文字を入りやすく */
         .scoreboard .team-name-cell {
             text-align: left;
             padding: 0;
-            width: 22%;
-            height: 48px; /* セルの高さをしっかり固定 */
+            width: 25%;
+            height: 48px;
         }
         
-        /* 🛠 【超重要修正】inputを廃止し、divでの上下左右完全中央揃えに完全移行 */
+        /* 🛠 【修正箇所】絶対に縦に改行させない（横一列に並べる）設定を追加 */
         .team-div-input {
             width: 100%;
             height: 48px;
             box-sizing: border-box;
-            padding: 0 5px;
+            padding: 0 3px;
             color: #ffffff;
             font-size: 13px;
             font-weight: bold;
             outline: none;
-            word-break: break-all;
             overflow: hidden;
+            white-space: nowrap; /* 👈 絶対に自動改行させない魔法の命令 */
 
-            /* html2canvasでも絶対に崩れない最強の上下左右中央揃えトリガー */
+            /* html2canvasでも絶対に崩れない上下左右中央揃え */
             display: flex;
-            align-items: center;     /* 縦方向のど真ん中 */
-            justify-content: center;  /* 横方向のど真ん中 */
-            text-align: center;      /* 文字のセンタリング */
+            align-items: center;
+            justify-content: center;
+            text-align: center;
         }
-        /* 入力中（フォーカス時）のオレンジ枠線も綺麗に表示 */
         .team-div-input:focus {
             background-color: #333333;
             box-shadow: inset 0 0 0 1px #ff9900;
         }
-        /* 未入力の時にプレースホルダー（薄い文字）を出す設定 */
         .team-div-input:empty:before {
             content: attr(placeholder);
             color: #555555;
@@ -342,12 +342,12 @@
 
     <div id="capture-area">
         <div class="match-info">
-		<div>
-		    <span onclick="document.getElementById('match-date').showPicker();" style="cursor: pointer; font-size: 16px;">📅</span> 
-		    <input type="date" id="match-date" onclick="this.showPicker();"> 
-		    ｜ 🏆 
-		    <input type="text" id="match-title" value="" placeholder="大会名を入力">
-		</div>
+            <div>
+                <span onclick="document.getElementById('match-date').showPicker();" style="cursor: pointer; font-size: 16px;">📅</span> 
+                <input type="date" id="match-date" onclick="this.showPicker();"> 
+                ｜ 🏆 
+                <input type="text" id="match-title" value="" placeholder="大会名を入力">
+            </div>
             <div class="location">
                 📍【会場】
                 <input type="text" id="match-location" value="" placeholder="球場名を入力">
@@ -420,6 +420,7 @@
         <div class="confirm-container">
             <textarea class="debug-textarea" id="debug-output" readonly placeholder="上の「速報テキストを作成」を押すと、ここに送信文字が表示されます。"></textarea>
             <button class="btn-line-send" id="send-to-line-btn">
+                <span class="icon">💬</span>
                 <div>この文字を<br>LINEで送る</div>
             </button>
         </div>
@@ -434,6 +435,13 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // 🛠 【追加機能】ページを開いた時に「今日の日付」を自動入力
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            document.getElementById('match-date').value = `${yyyy}-${mm}-${dd}`;
+
             const inningCells = document.querySelectorAll('.inning-score');
             const stepperTemplate = document.getElementById('stepper-template').innerHTML;
 
@@ -546,7 +554,6 @@
                 if (rows.length < 2) return;
 
                 const buildTeamLine = (row) => {
-                    // 🛠 .team-inputのvalueから、.team-div-inputのtextContent（文字中身）の取得に変更
                     let teamName = row.querySelector('.team-div-input').textContent.trim();
                     if (!teamName) teamName = "チーム";
                     let shortName = teamName.substring(0, 3);
