@@ -23,24 +23,53 @@
             border-radius: 6px;
         }
 
-        /* 試合情報エリア */
-        .match-info {
+        /* 🛠 試合情報エリア（1列3行 ＋ 右側にクリアボタン） */
+        .match-info-container {
+            display: flex;
             background-color: #222222;
             border-left: 5px solid #ff9900;
             padding: 12px;
             border-radius: 4px;
             margin-bottom: 15px;
+            align-items: center;
+            justify-content: space-between;
         }
-        .match-info div {
-            margin-bottom: 5px;
+        .match-info-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex-grow: 1;
+        }
+        .match-info-row {
             font-size: 14px;
+            display: flex;
+            align-items: center;
         }
-        .match-info .location {
-            color: #ffffff;
-            font-weight: bold;
+        .match-info-row input[type="text"] {
+            flex-grow: 1;
         }
-        #match-location {
-            color: #ffffff !important;
+
+        /* 🛠 右上の小さなクリアボタン設定 */
+        .clear-box-top {
+            padding-left: 10px;
+        }
+        .btn-clear-mini {
+            background-color: #331111;
+            color: #ff4444;
+            border: 1px solid #ff4444;
+            border-radius: 4px;
+            width: 32px;
+            height: 32px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        .btn-clear-mini:active {
+            background-color: #551111;
         }
 
         /* 入力欄の基本スタイル */
@@ -76,44 +105,32 @@
             border: 2px solid #333333;
             text-align: center;
             margin-bottom: 20px;
+            table-layout: fixed;
         }
+        
+        .scoreboard th, .scoreboard td {
+            border: 1px solid #333333;
+            padding: 8px 0;
+            box-sizing: border-box;
+        }
+        
         .scoreboard th {
             background-color: #222222;
             color: #aaaaaa;
             font-size: 11px;
-            padding: 8px 2px;
-            border: 1px solid #333333;
-        }
-        .scoreboard th.ext-header {
-            color: #ff9900;
-            cursor: pointer;
-            background-color: #222222;
-            font-weight: bold;
-            min-width: 26px;
-        }
-        .scoreboard th.ext-header.active-ext {
-            background-color: #2a2a2a;
-            border-bottom: 2px solid #ff9900;
-        }
-        .scoreboard td {
-            font-size: 18px;
-            font-weight: bold;
-            padding: 12px 2px;
-            border: 1px solid #333333;
-            color: #ffcc00;
-            position: relative;
-            user-select: none;
         }
         
-        /* 🛠 【修正箇所】チーム名エリアの横幅を22%から25%に少し広げて文字を入りやすく */
+        .scoreboard .team-name-header,
         .scoreboard .team-name-cell {
+            width: 34%;
             text-align: left;
             padding: 0;
-            width: 25%;
+        }
+        
+        .scoreboard .team-name-cell {
             height: 48px;
         }
         
-        /* 🛠 【修正箇所】絶対に縦に改行させない（横一列に並べる）設定を追加 */
         .team-div-input {
             width: 100%;
             height: 48px;
@@ -124,9 +141,7 @@
             font-weight: bold;
             outline: none;
             overflow: hidden;
-            white-space: nowrap; /* 👈 絶対に自動改行させない魔法の命令 */
-
-            /* html2canvasでも絶対に崩れない上下左右中央揃え */
+            white-space: nowrap;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -140,12 +155,34 @@
             content: attr(placeholder);
             color: #555555;
         }
+
+        .scoreboard th.ext-header {
+            color: #ff9900;
+            cursor: pointer;
+            background-color: #222222;
+            font-weight: bold;
+        }
+        .scoreboard th.ext-header.active-ext {
+            background-color: #2a2a2a;
+            border-bottom: 2px solid #ff9900;
+        }
+        
+        .scoreboard td {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffcc00;
+            position: relative;
+            user-select: none;
+        }
+
+        .inning-score, .scoreboard th:not(.team-name-header):not(.total-header), .scoreboard .total-score {
+            width: 6%;
+        }
         
         .scoreboard .total-score {
             color: #ff3300;
             font-size: 20px;
             background-color: #111111;
-            width: 8%;
         }
 
         .score-text {
@@ -156,7 +193,6 @@
 
         .inning-score {
             cursor: pointer;
-            min-width: 26px;
         }
         .inning-score.active {
             background-color: #222222;
@@ -251,7 +287,7 @@
             text-align: center;
         }
 
-        /* メインアクションボタン */
+        /* 🛠 下部のアクションボタン（押しやすい2列並びに戻しました） */
         .action-box {
             display: flex;
             gap: 10px;
@@ -281,6 +317,7 @@
             background-color: #111111;
             color: #ffcc00;
             border: 2px solid #ffcc00;
+            box-sizing: border-box;
         }
 
         /* テキスト確認＆LINE送信エリア */
@@ -289,7 +326,7 @@
             border: 1px dashed #555555;
             border-radius: 6px;
             padding: 12px;
-            margin-top: 25px;
+            margin-top: 15px;
         }
         .debug-box h4 {
             margin: 0 0 8px 0;
@@ -342,28 +379,35 @@
 <body>
 
     <div id="capture-area">
-        <div class="match-info">
-            <div>
-                <span onclick="document.getElementById('match-date').showPicker();" style="cursor: pointer; font-size: 16px;">📅</span> 
-                <input type="date" id="match-date" onclick="this.showPicker();"> 
-                ｜ 🏆 
-                <input type="text" id="match-title" value="" placeholder="大会名を入力">
+        <div class="match-info-container">
+            <div class="match-info-inputs">
+                <div class="match-info-row">
+                    <span onclick="document.getElementById('match-date').showPicker();" style="cursor: pointer; font-size: 16px; margin-right: 5px;">📅</span> 
+                    <input type="date" id="match-date" onclick="this.showPicker();"> 
+                </div>
+                <div class="match-info-row">
+                    <span style="margin-right: 5px;">🏆</span>
+                    <input type="text" id="match-title" value="" placeholder="大会名を入力">
+                </div>
+                <div class="match-info-row">
+                    <span style="margin-right: 5px;">📍</span>
+                    <input type="text" id="match-location" value="" placeholder="球場名を入力">
+                </div>
             </div>
-            <div class="location">
-                📍【会場】
-                <input type="text" id="match-location" value="" placeholder="球場名を入力">
+            <div class="clear-box-top">
+                <button class="btn-clear-mini" id="clear-all-btn" title="試合データを全クリア">♻️</button>
             </div>
         </div>
 
         <table class="scoreboard">
             <thead>
                 <tr>
-                    <th>チーム</th>
+                    <th class="team-name-header">チーム</th>
                     <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th>
                     <th class="ext-header" data-num="8"></th>
                     <th class="ext-header" data-num="9"></th>
                     <th class="ext-header" data-num="10"></th>
-                    <th style="color: #ff3300;">R</th>
+                    <th class="total-header" style="color: #ff3300;">R</th>
                 </tr>
             </thead>
             <tbody>
@@ -421,7 +465,6 @@
         <div class="confirm-container">
             <textarea class="debug-textarea" id="debug-output" readonly placeholder="上の「速報テキストを作成」を押すと、ここに送信文字が表示されます。"></textarea>
             <button class="btn-line-send" id="send-to-line-btn">
-                <span class="icon">💬</span>
                 <div>この文字を<br>LINEで送る</div>
             </button>
         </div>
@@ -436,92 +479,10 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // 🛠 【追加機能】ページを開いた時に「今日の日付」を自動入力
-            const today = new Date();
-            const yyyy = today.getFullYear();
-            const mm = String(today.getMonth() + 1).padStart(2, '0');
-            const dd = String(today.getDate()).padStart(2, '0');
-            document.getElementById('match-date').value = `${yyyy}-${mm}-${dd}`;
-
             const inningCells = document.querySelectorAll('.inning-score');
             const stepperTemplate = document.getElementById('stepper-template').innerHTML;
-
-            // 延長ヘッダーのクリックイベント
-            const extHeaders = document.querySelectorAll('.ext-header');
-            extHeaders.forEach(header => {
-                const defaultNum = header.getAttribute('data-num');
-                header.addEventListener('click', () => {
-                    const current = header.textContent;
-                    if (current === '') {
-                        header.textContent = defaultNum;
-                        header.classList.add('active-ext');
-                        header.style.color = '#ff9900';
-                    } else if (current === defaultNum) {
-                        header.textContent = 'TB';
-                        header.style.color = '#ff3300';
-                    } else {
-                        header.textContent = '';
-                        header.classList.remove('active-ext');
-                    }
-                });
-            });
-
-            // スコア増減ロジック
-            inningCells.forEach(cell => {
-                cell.insertAdjacentHTML('beforeend', stepperTemplate);
-                const scoreTextSpan = cell.querySelector('.score-text');
-
-                cell.addEventListener('click', (e) => {
-                    if (e.target.closest('.score-stepper')) return;
-                    if (cell.classList.contains('active')) {
-                        cell.classList.remove('active');
-                    } else {
-                        clearActiveCells();
-                        cell.classList.add('active');
-                        if (scoreTextSpan.textContent.trim() === "") {
-                            scoreTextSpan.textContent = "0";
-                            updateTotalScore(cell.parentElement);
-                        }
-                    }
-                    e.stopPropagation();
-                });
-
-                cell.querySelector('.score-btn.up').addEventListener('click', (e) => {
-                    let currentScore = parseInt(scoreTextSpan.textContent.trim()) || 0;
-                    scoreTextSpan.textContent = currentScore + 1;
-                    updateTotalScore(cell.parentElement);
-                    e.stopPropagation();
-                });
-
-                cell.querySelector('.score-btn.down').addEventListener('click', (e) => {
-                    let currentScore = parseInt(scoreTextSpan.textContent.trim()) || 0;
-                    if (currentScore > 0) {
-                        scoreTextSpan.textContent = currentScore - 1;
-                    } else {
-                        scoreTextSpan.textContent = "";
-                    }
-                    updateTotalScore(cell.parentElement);
-                    e.stopPropagation();
-                });
-            });
-
-            document.addEventListener('click', () => { clearActiveCells(); });
-            function clearActiveCells() { inningCells.forEach(c => c.classList.remove('active')); }
-
-            function updateTotalScore(row) {
-                const scoreTexts = row.querySelectorAll('.score-text');
-                let total = 0;
-                let hasScore = false;
-                scoreTexts.forEach(t => {
-                    const text = t.textContent.trim();
-                    if (text !== "") { total += parseInt(text); hasScore = true; }
-                });
-                const totalCell = row.querySelector('.total-score');
-                totalCell.textContent = hasScore ? total : "";
-            }
-
-            // バッテリー行初期化
             const batteryContainer = document.getElementById('battery-container');
+
             const numOptions = `
                 <option value="">-</option><option value="1">1</option><option value="2">2</option><option value="3">3</option>
                 <option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option>
@@ -544,9 +505,198 @@
                 `;
                 li.querySelector('.start-num').value = startNum;
                 li.querySelector('.end-num').value = endNum;
+                
+                li.querySelectorAll('input, select').forEach(el => {
+                    el.addEventListener('input', saveAllData);
+                });
+
                 batteryContainer.appendChild(li);
             }
-            addBatteryRow("1", "", "", "");
+
+            // 【LocalStorage機能】データの保存処理
+            function saveAllData() {
+                const data = {
+                    date: document.getElementById('match-date').value,
+                    title: document.getElementById('match-title').value,
+                    location: document.getElementById('match-location').value,
+                    teams: [],
+                    scores: [],
+                    extHeaders: [],
+                    battery: []
+                };
+
+                document.querySelectorAll('.team-div-input').forEach(el => {
+                    data.teams.push(el.textContent.trim());
+                });
+
+                document.querySelectorAll('.team-row').forEach((row, rIdx) => {
+                    data.scores[rIdx] = [];
+                    row.querySelectorAll('.score-text').forEach(cell => {
+                        data.scores[rIdx].push(cell.textContent.trim());
+                    });
+                });
+
+                document.querySelectorAll('.ext-header').forEach(el => {
+                    data.extHeaders.push({
+                        text: el.textContent,
+                        active: el.classList.contains('active-ext'),
+                        color: el.style.color
+                    });
+                });
+
+                document.querySelectorAll('.battery-item').forEach(item => {
+                    data.battery.push({
+                        start: item.querySelector('.start-num').value,
+                        end: item.querySelector('.end-num').value,
+                        pitcher: item.querySelectorAll('.player-input')[0].value,
+                        catcher: item.querySelectorAll('.player-input')[1].value
+                    });
+                });
+
+                localStorage.setItem('bb_score_app_data', JSON.stringify(data));
+            }
+
+            // 【LocalStorage機能】データの復元処理
+            function loadAllData() {
+                const raw = localStorage.getItem('bb_score_app_data');
+                if (!raw) {
+                    const today = new Date();
+                    const yyyy = today.getFullYear();
+                    const mm = String(today.getMonth() + 1).padStart(2, '0');
+                    const dd = String(today.getDate()).padStart(2, '0');
+                    document.getElementById('match-date').value = `${yyyy}-${mm}-${dd}`;
+                    addBatteryRow("1", "", "", "");
+                    return;
+                }
+
+                const data = JSON.parse(raw);
+                document.getElementById('match-date').value = data.date || "";
+                document.getElementById('match-title').value = data.title || "";
+                document.getElementById('match-location').value = data.location || "";
+
+                document.querySelectorAll('.team-div-input').forEach((el, idx) => {
+                    if (data.teams && data.teams[idx]) el.textContent = data.teams[idx];
+                });
+
+                document.querySelectorAll('.ext-header').forEach((el, idx) => {
+                    if (data.extHeaders && data.extHeaders[idx]) {
+                        el.textContent = data.extHeaders[idx].text;
+                        if (data.extHeaders[idx].active) el.classList.add('active-ext');
+                        el.style.color = data.extHeaders[idx].color;
+                    }
+                });
+
+                document.querySelectorAll('.team-row').forEach((row, rIdx) => {
+                    if (data.scores && data.scores[rIdx]) {
+                        row.querySelectorAll('.score-text').forEach((cell, cIdx) => {
+                            cell.textContent = data.scores[rIdx][cIdx] || "";
+                        });
+                    }
+                    updateTotalScore(row);
+                });
+
+                batteryContainer.innerHTML = "";
+                if (data.battery && data.battery.length > 0) {
+                    data.battery.forEach(b => {
+                        addBatteryRow(b.start, b.end, b.pitcher, b.catcher);
+                    });
+                } else {
+                    addBatteryRow("1", "", "", "");
+                }
+            }
+
+            // 延長ヘッダーのクリックイベント
+            const extHeaders = document.querySelectorAll('.ext-header');
+            extHeaders.forEach(header => {
+                const defaultNum = header.getAttribute('data-num');
+                header.addEventListener('click', () => {
+                    const current = header.textContent;
+                    if (current === '') {
+                        header.textContent = defaultNum;
+                        header.classList.add('active-ext');
+                        header.style.color = '#ff9900';
+                    } else if (current === defaultNum) {
+                        header.textContent = 'TB';
+                        header.style.color = '#ff3300';
+                    } else {
+                        header.textContent = '';
+                        header.classList.remove('active-ext');
+                    }
+                    saveAllData();
+                });
+            });
+
+            // スコア増減ロジック
+            inningCells.forEach(cell => {
+                cell.insertAdjacentHTML('beforeend', stepperTemplate);
+                const scoreTextSpan = cell.querySelector('.score-text');
+
+                cell.addEventListener('click', (e) => {
+                    if (e.target.closest('.score-stepper')) return;
+                    if (cell.classList.contains('active')) {
+                        cell.classList.remove('active');
+                    } else {
+                        clearActiveCells();
+                        cell.classList.add('active');
+                        if (scoreTextSpan.textContent.trim() === "") {
+                            scoreTextSpan.textContent = "0";
+                            updateTotalScore(cell.parentElement);
+                            saveAllData();
+                        }
+                    }
+                    e.stopPropagation();
+                });
+
+                cell.querySelector('.score-btn.up').addEventListener('click', (e) => {
+                    let currentScore = parseInt(scoreTextSpan.textContent.trim()) || 0;
+                    scoreTextSpan.textContent = currentScore + 1;
+                    updateTotalScore(cell.parentElement);
+                    saveAllData();
+                    e.stopPropagation();
+                });
+
+                cell.querySelector('.score-btn.down').addEventListener('click', (e) => {
+                    let currentScore = parseInt(scoreTextSpan.textContent.trim()) || 0;
+                    if (currentScore > 0) {
+                        scoreTextSpan.textContent = currentScore - 1;
+                    } else {
+                        scoreTextSpan.textContent = "";
+                    }
+                    updateTotalScore(cell.parentElement);
+                    saveAllData();
+                    e.stopPropagation();
+                });
+            });
+
+            document.addEventListener('click', () => { clearActiveCells(); });
+            function clearActiveCells() { inningCells.forEach(c => c.classList.remove('active')); }
+
+            function updateTotalScore(row) {
+                const scoreTexts = row.querySelectorAll('.score-text');
+                let total = 0;
+                let hasScore = false;
+                scoreTexts.forEach(t => {
+                    const text = t.textContent.trim();
+                    if (text !== "") { total += parseInt(text); hasScore = true; }
+                });
+                const totalCell = row.querySelector('.total-score');
+                totalCell.textContent = hasScore ? total : "";
+            }
+
+            document.querySelectorAll('input[type="text"], input[type="date"]').forEach(input => {
+                input.addEventListener('input', saveAllData);
+            });
+            document.querySelectorAll('.team-div-input').forEach(div => {
+                div.addEventListener('input', saveAllData);
+            });
+
+            // 🛠 【最上部右側】全クリア機能
+            document.getElementById('clear-all-btn').addEventListener('click', () => {
+                if (confirm('現在の試合スコアやチーム名をすべて消去して、新しく作り直しますか？')) {
+                    localStorage.removeItem('bb_score_app_data');
+                    window.location.reload();
+                }
+            });
 
             // テキスト生成
             document.getElementById('line-share-btn').addEventListener('click', () => {
@@ -612,10 +762,9 @@
                 window.open("https://line.me/R/share?text=" + encodeURIComponent(textToSend), '_blank');
             });
 
-            // 画像保存ロジック（html2canvas）
+            // 画像保存
             document.getElementById('capture-btn').addEventListener('click', () => {
                 const target = document.getElementById('capture-area');
-                
                 const inputs = target.querySelectorAll('input');
                 inputs.forEach(input => input.setAttribute('value', input.value));
                 
@@ -634,6 +783,8 @@
                     alert('画像の保存に失敗しました。');
                 });
             });
+
+            loadAllData();
         });
     </script>
 </body>
